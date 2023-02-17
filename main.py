@@ -6,21 +6,36 @@ from telebot.apihelper import ApiTelegramException
 bot = telebot.TeleBot('6144355865:AAGc-S-JW19KaT3LjWRTrCrY9iZJQZdimQY')
 
 CHANNELS = [
-    ["1", "-1716601118", "https://t.me/+V45TPjkSO8g4YTg6"],
-    ["2","-1169696508","https://t.me/moranatamara"],
+    # ["1", "-1001169696508", "https://t.me/+V45TPjkSO8g4YTg6"],
+    ["2", "-1001871464696", "https://t.me/+0RDeerjZvuY1MjIy"]
 ]
+channel="-1001871464696"
 not_sub_message = 'необходимо подписаться на канал'
 
 
-def check_sub_channels(channels, user_id):
-    for channel in channels:
-        try:
-            bot.get_chat_member(channel[1], user_id)
-            return True
-        except ApiTelegramException as e:
-            if e.result_json['description'] == 'Bad Request: user not found':
-                return False
 
+# def check_sub_channels(channels, user_id):
+#     for channel in channels:
+#         chat_member=bot.get_chat_member(chat_id=channel[1],user_id=user_id)
+#         if chat_member:
+#             return False
+#     return True
+
+
+
+
+def check_sub_channels(chat_id, user_id):
+    for channel in chat_id:
+        try:
+            response = bot.get_chat_member(chat_id=channel[1], user_id=user_id)
+            if response.status == 'left':
+                return False
+            else:
+                return True
+
+        except ApiTelegramException as e:
+            if e.result_json['description'] == 'Bad Request: chat not found':
+                return False
 
 def showChannels():
     markup = types.InlineKeyboardMarkup(row_width=1)
@@ -32,21 +47,36 @@ def showChannels():
 
 @bot.message_handler(commands=['start', 'help'])
 def start(message):
-    if check_sub_channels(CHANNELS, message.from_user.id):
-        bot.send_message(message.chat.id,"/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ",parse_mode='html')
-    else:
+    if not check_sub_channels(CHANNELS, message.chat.id):
         bot.send_message(message.from_user.id, not_sub_message, reply_markup=showChannels())
+    else:
+        bot.send_message(message.from_user.id,"/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ",parse_mode='html')
+
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
-def subChannels(callback):
+def CallBacks(callback):
     if callback.data == 'done':
         bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.id)
-        if check_sub_channels(CHANNELS, callback.from_user.id):
-            bot.send_message(callback.message.chat.id, "/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ", parse_mode='html')
-        else:
-            bot.send_message(callback.message.chat.id, not_sub_message, reply_markup=showChannels())
 
+        if not check_sub_channels(CHANNELS, callback.message.chat.id):
+            bot.send_message(callback.message.chat.id, not_sub_message, reply_markup=showChannels())
+        else:
+            bot.send_message(callback.message.chat.id, "/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ", parse_mode='html')
+    if callback.data == 'next':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Пицца 5', callback_data='pizza_1'))
+        markup.add(types.InlineKeyboardButton('Пицца 6', callback_data='pizza_2'))
+        markup.add(types.InlineKeyboardButton('Пицца 7', callback_data='pizza_3'))
+        markup.add(types.InlineKeyboardButton('Пицца 8', callback_data='pizza_4'))
+        markup.add(types.InlineKeyboardButton('>', callback_data='neexy'))
+        markup.add(types.InlineKeyboardButton('<', callback_data='previe_2'))
+        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='2 страница',reply_markup=markup)
+    elif callback.data == 'previe_2':
+        bot.delete_message(callback.message.chat.id, message_id=callback.message.message_id)
+        return stuff(message=callback.message)
+    elif callback.data == "previe":
+        bot.send_message(callback.message.chat.id, text='такой страницы нет ')
 
 # @bot.message_handler(commands=['add_new_advr'])
 # def list_advr(message):
@@ -120,23 +150,23 @@ def stuff(message):
     bot.send_message(message.chat.id, '1 страница', reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda callback: callback.data)
-def callback_pizza_page_2(callback):
-    if callback.data == 'next':
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton('Пицца 5', callback_data='pizza_1'))
-        markup.add(types.InlineKeyboardButton('Пицца 6', callback_data='pizza_2'))
-        markup.add(types.InlineKeyboardButton('Пицца 7', callback_data='pizza_3'))
-        markup.add(types.InlineKeyboardButton('Пицца 8', callback_data='pizza_4'))
-        markup.add(types.InlineKeyboardButton('>', callback_data='neexy'))
-        markup.add(types.InlineKeyboardButton('<', callback_data='previe_2'))
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='2 страница',reply_markup=markup)
+# @bot.callback_query_handler(func=lambda callback: callback.data)
+# def callback_pizza_page_2(callback):
+#     if callback.data == 'next':
+#         markup = types.InlineKeyboardMarkup()
+#         markup.add(types.InlineKeyboardButton('Пицца 5', callback_data='pizza_1'))
+#         markup.add(types.InlineKeyboardButton('Пицца 6', callback_data='pizza_2'))
+#         markup.add(types.InlineKeyboardButton('Пицца 7', callback_data='pizza_3'))
+#         markup.add(types.InlineKeyboardButton('Пицца 8', callback_data='pizza_4'))
+#         markup.add(types.InlineKeyboardButton('>', callback_data='neexy'))
+#         markup.add(types.InlineKeyboardButton('<', callback_data='previe_2'))
+#         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='2 страница',reply_markup=markup)
 
-    elif callback.data == 'previe_2':
-        bot.delete_message(callback.message.chat.id, message_id=callback.message.message_id)
-        return stuff(message=callback.message)
-    elif callback.data == "previe":
-        bot.send_message(callback.message.chat.id, text='такой страницы нет ')
+    # elif callback.data == 'previe_2':
+    #     bot.delete_message(callback.message.chat.id, message_id=callback.message.message_id)
+    #     return stuff(message=callback.message)
+    # elif callback.data == "previe":
+    #     bot.send_message(callback.message.chat.id, text='такой страницы нет ')
 
 
 # @bot.message_handler(commands=['comm'])
