@@ -1,10 +1,14 @@
-import telebot
-from telebot import types
-from telebot.apihelper import ApiTelegramException
+# import telebot
+# from telebot import types
+# from telebot.apihelper import ApiTelegramException
+from aiogram import Bot,types
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
 
 
-bot = telebot.TeleBot('6144355865:AAGc-S-JW19KaT3LjWRTrCrY9iZJQZdimQY')
 
+Bot = Bot('6144355865:AAGc-S-JW19KaT3LjWRTrCrY9iZJQZdimQY')
+bot=Dispatcher(Bot)
 CHANNELS = [
     # ["1", "-1001169696508", "https://t.me/+V45TPjkSO8g4YTg6"],
     ["2", "-1001871464696", "https://t.me/+0RDeerjZvuY1MjIy"]
@@ -32,10 +36,11 @@ def check_sub_channels(chat_id, user_id):
                 return False
             else:
                 return True
-
-        except ApiTelegramException as e:
-            if e.result_json['description'] == 'Bad Request: chat not found':
-                return False
+        except Exception as e:
+            return False
+        # except Exception as e:
+        #     if e.result_json['description'] == 'Bad Request: chat not found':
+        #         return False
 
 def showChannels():
     markup = types.InlineKeyboardMarkup(row_width=1)
@@ -46,37 +51,39 @@ def showChannels():
 
 
 @bot.message_handler(commands=['start', 'help'])
-def start(message):
+async def start(message:types.Message):
     if not check_sub_channels(CHANNELS, message.chat.id):
-        bot.send_message(message.from_user.id, not_sub_message, reply_markup=showChannels())
+        await Bot.send_message(message.from_user.id, not_sub_message, reply_markup=showChannels())
     else:
-        bot.send_message(message.from_user.id,"/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ",parse_mode='html')
+        await Bot.send_message(message.from_user.id,
+                         "/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  "
+                         "\r\n /answer_quations - пройти опрос  ",parse_mode='html')
 
 
 
-@bot.callback_query_handler(func=lambda callback: callback.data)
-def CallBacks(callback):
-    if callback.data == 'done':
-        bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.id)
-
-        if not check_sub_channels(CHANNELS, callback.message.chat.id):
-            bot.send_message(callback.message.chat.id, not_sub_message, reply_markup=showChannels())
-        else:
-            bot.send_message(callback.message.chat.id, "/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ", parse_mode='html')
-    if callback.data == 'next':
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton('Пицца 5', callback_data='pizza_1'))
-        markup.add(types.InlineKeyboardButton('Пицца 6', callback_data='pizza_2'))
-        markup.add(types.InlineKeyboardButton('Пицца 7', callback_data='pizza_3'))
-        markup.add(types.InlineKeyboardButton('Пицца 8', callback_data='pizza_4'))
-        markup.add(types.InlineKeyboardButton('>', callback_data='neexy'))
-        markup.add(types.InlineKeyboardButton('<', callback_data='previe_2'))
-        bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='2 страница',reply_markup=markup)
-    elif callback.data == 'previe_2':
-        bot.delete_message(callback.message.chat.id, message_id=callback.message.message_id)
-        return stuff(message=callback.message)
-    elif callback.data == "previe":
-        bot.send_message(callback.message.chat.id, text='такой страницы нет ')
+# @bot.callback_query_handler()
+# async def CallBacks(callback:types.CallbackQuery):
+    # if callback.data == 'done':
+    #     bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.id)
+    #
+    #     if not check_sub_channels(CHANNELS, callback.message.chat.id):
+    #         await bot.send_message(callback.message.chat.id, not_sub_message, reply_markup=showChannels())
+    #     else:
+    #        await bot.send_message(callback.message.chat.id, "/setNumber - установить номер телефона \r\n /pizza - меню магазина \r\n /setLocation - установить адресс  ", parse_mode='html')
+    # if callback.data == 'next':
+    #     markup = types.InlineKeyboardMarkup()
+    #     markup.add(types.InlineKeyboardButton('Пицца 5', callback_data='pizza_1'))
+    #     markup.add(types.InlineKeyboardButton('Пицца 6', callback_data='pizza_2'))
+    #     markup.add(types.InlineKeyboardButton('Пицца 7', callback_data='pizza_3'))
+    #     markup.add(types.InlineKeyboardButton('Пицца 8', callback_data='pizza_4'))
+    #     markup.add(types.InlineKeyboardButton('>', callback_data='neexy'))
+    #     markup.add(types.InlineKeyboardButton('<', callback_data='previe_2'))
+    #     bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='2 страница',reply_markup=markup)
+    # elif callback.data == 'previe_2':
+    #     bot.delete_message(callback.message.chat.id, message_id=callback.message.message_id)
+    #     return await stuff(message=callback.message)
+    # elif callback.data == "previe":
+    #  await   bot.send_message(callback.message.chat.id, text='такой страницы нет ')
 
 # @bot.message_handler(commands=['add_new_advr'])
 # def list_advr(message):
@@ -96,16 +103,20 @@ def CallBacks(callback):
 #         bot.register_next_step_handler(numbers, getNumber)
 
 
-@bot.message_handler(commands=['setNumber'])
-def setNumber(message):
-    numbers = bot.send_message(message.chat.id, text='введите номер телефона для доставки')
-    bot.register_next_step_handler(numbers, getNumber)
+# @bot.message_handler(commands=['answer_quations'])
+# def Quize(message):
+#     bot.send_message(message.chat.id,text="<b>1 вопрос</b>: \r\n сколько вам лет ?",parse_mode='html')
+#
+# @bot.message_handler(commands=['setNumber'])
+# def setNumber(message):
+#     numbers = bot.send_message(message.chat.id, text='введите номер телефона для доставки')
+#     bot.register_next_step_handler(numbers, getNumber)
 
 
-@bot.message_handler(commands=['setLocation'])
-def setNumber(message):
-    location = bot.send_message(message.chat.id, text='введите полный адресс')
-    bot.register_next_step_handler(location, getLocation)
+# @bot.message_handler(commands=['setLocation'])
+# def setNumber(message):
+#     location = bot.send_message(message.chat.id, text='введите полный адресс')
+#     bot.register_next_step_handler(location, getLocation)
 
 
 # @bot.message_handler(commands=['setFood'])
@@ -114,14 +125,14 @@ def setNumber(message):
 #     bot.register_next_step_handler(numbers, getNumber)
 
 
-def getNumber(numbers):
-    numbers = numbers.text
-    print(numbers)
+# def getNumber(numbers):
+#     numbers = numbers.text
+#     print(numbers)
 
 
-def getLocation(location):
-    location = location.text
-    print(location)
+# def getLocation(location):
+#     location = location.text
+#     print(location)
 
 
 # def getIdFood(food):
@@ -137,18 +148,18 @@ def getLocation(location):
 # print(location)
 # print(food)
 
-@bot.message_handler(commands=['pizza'])
-def stuff(message):
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton('Пеперони', callback_data='pizza_1'))
-    markup.add(types.InlineKeyboardButton('4 сыра', callback_data='pizza_2'))
-    markup.add(types.InlineKeyboardButton('Баварская', callback_data='pizza_3'))
-    markup.add(types.InlineKeyboardButton('Кола', callback_data='pizza_4'))
-    markup.add(types.InlineKeyboardButton('>', callback_data='next'))
-    markup.add(types.InlineKeyboardButton('<', callback_data='previe'))
-
-    bot.send_message(message.chat.id, '1 страница', reply_markup=markup)
-
+# @bot.message_handler(commands=['pizza'])
+# def stuff(message):
+#     markup = types.InlineKeyboardMarkup()
+#     markup.add(types.InlineKeyboardButton('Пеперони', callback_data='pizza_1'))
+#     markup.add(types.InlineKeyboardButton('4 сыра', callback_data='pizza_2'))
+#     markup.add(types.InlineKeyboardButton('Баварская', callback_data='pizza_3'))
+#     markup.add(types.InlineKeyboardButton('Кола', callback_data='pizza_4'))
+#     markup.add(types.InlineKeyboardButton('>', callback_data='next'))
+#     markup.add(types.InlineKeyboardButton('<', callback_data='previe'))
+#
+#     bot.send_message(message.chat.id, '1 страница', reply_markup=markup)
+#
 
 # @bot.callback_query_handler(func=lambda callback: callback.data)
 # def callback_pizza_page_2(callback):
@@ -192,4 +203,5 @@ def stuff(message):
 #             bot.send_message(message.chat.id, 'who!?')
 
 
-bot.polling(none_stop=True)
+executor.start_polling(dispatcher=bot,skip_updates=True)
+# bot.polling(none_stop=True)
